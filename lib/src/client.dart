@@ -16,7 +16,7 @@ class Client {
 
       final subscription = client.subscribeToTimeSeries(subscribeRequest);
       await for (final timeSeriesData in subscription) {
-        print('Received time series data: ${timeSeriesData.data}');
+        print('Received time series data: x: ${timeSeriesData.x} y: ${timeSeriesData.y}');
       }
     } catch (e) {
       print('Error: $e');

@@ -31,16 +31,17 @@ const ToneConfig$json = const {
 
 /// Descriptor for `ToneConfig`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List toneConfigDescriptor = $convert.base64Decode('CgpUb25lQ29uZmlnEiMKDWluaXRpYWxfcGhhc2UYASABKAJSDGluaXRpYWxQaGFzZRIcCglhbXBsaXR1ZGUYAiABKAJSCWFtcGxpdHVkZRIcCglmcmVxdWVuY3kYAyABKAJSCWZyZXF1ZW5jeQ==');
-@$core.Deprecated('Use timeSeriesDataDescriptor instead')
-const TimeSeriesData$json = const {
-  '1': 'TimeSeriesData',
+@$core.Deprecated('Use currentTimeSeriesDataDescriptor instead')
+const CurrentTimeSeriesData$json = const {
+  '1': 'CurrentTimeSeriesData',
   '2': const [
-    const {'1': 'data', '3': 1, '4': 3, '5': 2, '10': 'data'},
+    const {'1': 'x', '3': 1, '4': 1, '5': 1, '10': 'x'},
+    const {'1': 'y', '3': 2, '4': 1, '5': 1, '10': 'y'},
   ],
 };
 
-/// Descriptor for `TimeSeriesData`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List timeSeriesDataDescriptor = $convert.base64Decode('Cg5UaW1lU2VyaWVzRGF0YRISCgRkYXRhGAEgAygCUgRkYXRh');
+/// Descriptor for `CurrentTimeSeriesData`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List currentTimeSeriesDataDescriptor = $convert.base64Decode('ChVDdXJyZW50VGltZVNlcmllc0RhdGESDAoBeBgBIAEoAVIBeBIMCgF5GAIgASgBUgF5');
 @$core.Deprecated('Use publishResponseDescriptor instead')
 const PublishResponse$json = const {
   '1': 'PublishResponse',

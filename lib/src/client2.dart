@@ -15,9 +15,9 @@ class Client2 {
       final publishRequest = TimeSeriesConfig()
         ..sampleRate = 44100
         ..tones.addAll([
-          ToneConfig(initialPhase: 0.0, amplitude: 1.0, frequency: 440.0),
+          ToneConfig(initialPhase: 0.0, amplitude: 1.0, frequency: 4440.0),
           ToneConfig(initialPhase: 0.0, amplitude: 0.5, frequency: 880.0),
-          ToneConfig(initialPhase: 0.0, amplitude: 0.25, frequency: 1320.0),
+          ToneConfig(initialPhase: 0.0, amplitude: 0.25, frequency: 13020.0),
         ]);
 
       final publishResponse = await client.publishTimeSeries(publishRequest);
