@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:time_series_generator/src/generated/time_series_generator.dart';
 
 part 'time_series_generator_event.dart';
@@ -38,8 +37,8 @@ class TimeSeriesGeneratorBloc
 
     dataGenerationSubscription?.cancel(); // Cancel any existing subscription
 
-    var xValues = <double>[]; // List to store x-values
-    var yValues = <double>[]; // List to store y-values
+    var xValues = List<double>.filled(state.batchSize!, 0.0);
+    var yValues = List<double>.filled(state.batchSize!, 0.0);
 
     Timer.periodic(Duration(microseconds: intervalMicroseconds), (_) {
       elapsedTime += intervalMicroseconds; // Update elapsed time
