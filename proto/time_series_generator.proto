@@ -13,7 +13,12 @@ message ToneConfig {
   float frequency = 3;
 }
 
-message CurrentTimeSeriesData {
+message BatchedData {
+  repeated double xValues = 1;
+  repeated double yValues = 2;
+} 
+
+message TimeSeriesData {
   double x = 1;
   double y = 2;
 }
@@ -25,7 +30,7 @@ message PublishResponse {
 
 service TimeSeriesGenerator {
   rpc PublishTimeSeries(TimeSeriesConfig) returns (PublishResponse) {}
-  rpc SubscribeToTimeSeries(Empty) returns (stream CurrentTimeSeriesData) {}
+  rpc SubscribeToTimeSeries(Empty) returns (stream BatchedData) {}
 }
 
 message Empty {}

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:time_series_generator/src/generated/time_series_generator.dart';
 
 part 'time_series_generator_event.dart';
@@ -14,7 +15,8 @@ class TimeSeriesGeneratorBloc
       dataGenerationSubscription; // Stream subscription to control data generation
 
   TimeSeriesGeneratorBloc()
-      : super(TimeSeriesGeneratorState(current: CurrentTimeSeriesData())) {
+      : super(TimeSeriesGeneratorState(
+            current: TimeSeriesData(), batchedData: BatchedData())) {
     on<StartDataGeneration>(_onStartDataGeneration);
     on<StopDataGeneration>(_onStopDataGeneration);
     on<OnSubscribe>(_onSubscribe);
@@ -24,51 +26,59 @@ class TimeSeriesGeneratorBloc
 
   void _onStartDataGeneration(
       StartDataGeneration event, Emitter<TimeSeriesGeneratorState> emit) {
-    final constants = <double>[];
-    final amplitudes = <double>[];
-    final initialPhases = <double>[];
-
-    for (var toneConfig in event.toneConfigs) {
-      final constant = 2 * pi * toneConfig.frequency / event.sampleRate;
-      constants.add(constant);
-      amplitudes.add(toneConfig.amplitude);
-      initialPhases.add(toneConfig.initialPhase);
-    }
-
+    final toneConfigs = <ToneConfigData>[];
     final intervalMicroseconds = (1000000 / event.sampleRate).round();
     var elapsedTime = 0;
 
+    for (var toneConfig in event.toneConfigs) {
+      final constant = 2 * pi * toneConfig.frequency / event.sampleRate;
+      toneConfigs.add(ToneConfigData(
+          constant, toneConfig.amplitude, toneConfig.initialPhase));
+    }
+
     dataGenerationSubscription?.cancel(); // Cancel any existing subscription
 
-    dataGenerationSubscription =
-        Stream.periodic(Duration(microseconds: intervalMicroseconds))
-            .listen((_) {
+    var xValues = <double>[]; // List to store x-values
+    var yValues = <double>[]; // List to store y-values
+
+    Timer.periodic(Duration(microseconds: intervalMicroseconds), (_) {
       elapsedTime += intervalMicroseconds; // Update elapsed time
 
-      final timeSeriesData = CurrentTimeSeriesData()
-        ..x = elapsedTime / 1000 // Convert to milliseconds
-        ..y = generateYValue(elapsedTime, constants, amplitudes, initialPhases);
+      final xValue = elapsedTime / 1000; // Convert to milliseconds
+      final yValue = generateYValue(elapsedTime, toneConfigs);
 
-      if (!dataGenerationSubscription!.isPaused) {
+      xValues.add(xValue); // Add current x-value to the list
+      yValues.add(yValue); // Add current y-value to the list
+
+      if (xValues.length >= state.batchSize!) {
+        print('server x:' + xValues.first.toString());
+        // If the desired number of data points is reached, update the state
+        final output = BatchedData(
+          xValues: xValues,
+          yValues: yValues,
+        );
+
         emit(state.copyWith(
-            current: timeSeriesData)); // Send data to subscribers
+          batchedData: output, // Send data batches to subscribers
+        ));
+
+        xValues.clear(); // Clear the x-values list
+        yValues.clear(); // Clear the y-values list
       }
     });
-  }
-
+}
   void _onStopDataGeneration(
       StopDataGeneration event, Emitter<TimeSeriesGeneratorState> emit) {
     dataGenerationSubscription
         ?.cancel(); // Cancel the data generation subscription
   }
 
-  double generateYValue(int currentTime, List<double> constants,
-      List<double> amplitudes, List<double> initialPhases) {
+  double generateYValue(int currentTime, List<ToneConfigData> toneConfigs) {
     double yValue = 0;
 
-    for (var t = 0; t < constants.length; t++) {
-      final value =
-          amplitudes[t] * sin(constants[t] * currentTime + initialPhases[t]);
+    for (var toneConfig in toneConfigs) {
+      final value = toneConfig.amplitude *
+          sin(toneConfig.constant * currentTime + toneConfig.initialPhase);
       yValue += value;
     }
 
@@ -107,6 +117,7 @@ class TimeSeriesGeneratorBloc
         isGenerating: true,
       ),
     );
+    print(state.subscribers.length);
 
     if (state.subscribers.length > 0) {
       // Start data generation if there are active subscribers
@@ -116,8 +127,17 @@ class TimeSeriesGeneratorBloc
 
   @override
   Future<void> close() {
+    print('onClose');
     dataGenerationSubscription
         ?.cancel(); // Cancel the subscription when closing the bloc
     return super.close();
   }
+}
+
+class ToneConfigData {
+  final double constant;
+  final double amplitude;
+  final double initialPhase;
+
+  ToneConfigData(this.constant, this.amplitude, this.initialPhase);
 }

@@ -24,7 +24,7 @@ class TimeSeriesGeneratorService extends TimeSeriesGeneratorServiceBase {
   }
 
   @override
-  Stream<CurrentTimeSeriesData> subscribeToTimeSeries(
+  Stream<BatchedData> subscribeToTimeSeries(
       grpc.ServiceCall call, Empty request) {
     print('New subscriber');
 
@@ -33,23 +33,7 @@ class TimeSeriesGeneratorService extends TimeSeriesGeneratorServiceBase {
     generatorBloc.add(OnSubscribe(subscriberHashCode));
 
     // Return the stream from the bloc
-    final stream = generatorBloc.stream.map((state) => state.current!);
-
-    stream.listen(
-      (event) {
-        // Handle stream events here
-        // print('Stream event: $event');
-      },
-      onError: (error) {
-        // Handle stream errors here
-        print('Stream error: $error');
-      },
-      onDone: () {
-        // Handle stream completion here
-        print('Stream completed');
-        generatorBloc.add(OnUnsubscribe(subscriberHashCode));
-      },
-    );
+    final stream = generatorBloc.stream.map((state) => state.batchedData!);
 
     return stream;
   }
@@ -82,8 +66,17 @@ class Server {
     ProcessSignal.sigint.watch().listen((signal) async {
       print('Received signal: ${signal.toString()}. Shutting down...');
 
+      // Stop data generation by adding the StopDataGeneration event
+      service.generatorBloc.add(StopDataGeneration());
+
+      // Wait for a brief moment to ensure data generation stops
+      await Future.delayed(Duration(milliseconds: 100));
+
       // Gracefully shutdown the server
       await server.shutdown();
+
+      // Close the client channel
+      await service.generatorBloc.close();
 
       // Exit the program
       exit(0);
